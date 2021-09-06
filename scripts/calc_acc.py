@@ -140,9 +140,9 @@ kt_vetra1 = np.array(kt_vetra1)
 kt_vetra2 = np.array(kt_vetra2)
 kt_vetra3 = np.array(kt_vetra3)
 scores = pd.DataFrame(columns = ["kt", "method"])
-scores["kt"] = np.concatenate((kt_cellpath, kt_cellrank, (kt_vetra1 + kt_vetra2 + kt_vetra3)/3, kt_vdpt), axis = 0)
+scores["kt"] = np.concatenate((kt_cellpath, kt_cellrank, (kt_vetra1 + kt_vetra2 + kt_vetra3)/3, kt_vdpt, kt_slingshot), axis = 0)
 # scores["method"] = ["cellpath(exact)"] * kt_cellpath.shape[0] + ["cellpath(fast)"] * kt_cellpath_fast.shape[0] + ["cellrank"] * kt_cellrank.shape[0] + ["slingshot"] * kt_slingshot.shape[0] + ["vetra"] * kt_vetra.shape[0]
-scores["method"] = ["CellPath"] * kt_cellpath.shape[0] + ["CellRank"] * kt_cellrank.shape[0] + ["VeTra"] * kt_vetra1.shape[0] + ["Vdpt"] * kt_vdpt.shape[0]
+scores["method"] = ["CellPath"] * kt_cellpath.shape[0] + ["CellRank"] * kt_cellrank.shape[0] + ["VeTra"] * kt_vetra1.shape[0] + ["Vdpt"] * kt_vdpt.shape[0] + ["Slingshot"] * kt_slingshot.shape[0]
 
 fig = plt.figure(figsize = (7,5))
 ax = fig.add_subplot()
@@ -328,7 +328,8 @@ kt_vetra1 = []
 kt_vetra2 = []
 kt_vetra3 = []
 kt_vetra_dynamical = []
-datasets = ["3branches_rand0", "3branches_rand1", "3branches_rand3", "3branches_rand4", "4branches_rand0"]
+# datasets = ["3branches_rand0", "3branches_rand1", "3branches_rand3", "3branches_rand4", "4branches_rand0"]
+datasets = ["3branches_rand0", "3branches_rand1", "3branches_rand3", "3branches_rand4"]
 for data in datasets:
     # cellrank, use latent time
     adata = anndata.read_h5ad(direct2 + data + ".h5ad")
@@ -519,6 +520,7 @@ def plot_pt(adata, pseudo_order, basis = "pca", trajs = 4, figsize= (20,20), sav
     
     plt.show()    
 
+# In[]
 direct1 = "../results/"
 direct2 = "../data/sim/dyngen_tree/"
 use_dynamical = False
@@ -696,6 +698,13 @@ true_i = adata.obs['sim_time'].iloc[select_cell].values
 pt_vetra.loc[select_cell.squeeze(), "traj_" + str(i - 1)] = pt_i.squeeze()
 plot_pt(adata, pt_vetra, basis = "pca", trajs = 1, figsize=(10,5), save_as = direct1 + "plots/multicycles_vetra.png")
 
+# reCAT
+pt_reCAT = pd.read_csv(direct1 + "reCAT/pt_200cells_rand"+str(rand)+".csv", index_col = 0, sep = "\t")
+pt_reCAT.index = np.arange(pt_reCAT.shape[0])
+pt_reCAT.columns = ["traj_" + str(i) for i in range(1)]
+plot_pt(adata, pt_reCAT, basis = "pca", trajs = 1, figsize=(10,5), save_as = direct1 + "plots/multicycles_reCAT.png")
+
+
 
 # In[17] VeloSim tree
 
@@ -794,6 +803,148 @@ for i in range(1,counts):
     pt_vetra.loc[select_cell.squeeze(), "traj_" + str(i - 1)] = pt_i.squeeze()
 
 plot_pt(cellpath_obj.adata, pt_vetra, basis = "pca", trajs = 4, figsize=(20,14), save_as= direct1 + "plots/bifur_vetra.png")
+
+
+
+# In[] Plot real-dentate gyrus
+
+direct1 = "../results/"
+
+adata = anndata.read_h5ad("../data/real/DentateGyrus/dg_clust.h5ad")
+
+pt_cellrank_latent = pd.read_csv(direct1 + "cellrank/real/DentateGyrus/dg_latent_cellrank.tsv", sep = "\t", index_col = 0)
+
+
+plot_pt(adata, pt_cellrank_latent, basis = "umap", trajs = 1, figsize=(20,10), save_as= direct1 + "plots/dg_cellranks.png")
+
+pt_vetra = pd.DataFrame(data = np.nan, index = pt_cellrank_latent.index, columns = ["traj_" + str(i) for i in range(5)])
+counts = 6
+
+for i in range(1,counts):
+    select_cell = pd.read_csv(direct1 + "vetra/real/DentateGyrus/TI_results_5/cell_select_" + str(i) + ".txt", header = None).values.astype(np.bool).squeeze()
+    pt_i = pd.read_csv(direct1 + "vetra/real/DentateGyrus/TI_results_5/trajectory_" + str(i) + ".txt", header = None).iloc[select_cell].values
+    pt_vetra.loc[select_cell.squeeze(), "traj_" + str(i - 1)] = pt_i.squeeze()
+
+plot_pt(adata, pt_vetra, basis = "umap", trajs = counts - 1, figsize=(20,20), save_as= direct1 + "plots/dg_vetra_5.pdf")
+
+# In[] Plot real-pe
+direct1 = "../results/"
+
+adata = anndata.read_h5ad("../data/real/Pancreas/pe_clust.h5ad")
+
+pt_cellrank_latent = pd.read_csv(direct1 + "cellrank/real/Pancreas/pe_latent_cellrank.tsv", sep = "\t", index_col = 0)
+
+
+plot_pt(adata, pt_cellrank_latent, basis = "umap", trajs = 1, figsize=(20,10), save_as= direct1 + "plots/pe_cellranks.png")
+
+pt_vetra = pd.DataFrame(data = np.nan, index = pt_cellrank_latent.index, columns = ["traj_" + str(i) for i in range(5)])
+counts = 5
+
+for i in range(1,counts):
+    select_cell = pd.read_csv(direct1 + "vetra/real/Pancreas/TI_results/cell_select_" + str(i) + ".txt", header = None).values.astype(np.bool).squeeze()
+    pt_i = pd.read_csv(direct1 + "vetra/real/Pancreas/TI_results/trajectory_" + str(i) + ".txt", header = None).iloc[select_cell].values
+    pt_vetra.loc[select_cell.squeeze(), "traj_" + str(i - 1)] = pt_i.squeeze()
+
+plot_pt(adata, pt_vetra, basis = "umap", trajs = counts - 1, figsize=(20,10), save_as= direct1 + "plots/pe_vetra.png")
+
+# In[] Plot real-hema
+direct1 = "../results/"
+
+adata = anndata.read_h5ad("../data/real/hema/adata_day4_clust.h5ad")
+
+pt_cellrank_latent = pd.read_csv(direct1 + "cellrank/real/hema/hema_latent_cellrank.tsv", sep = "\t", index_col = 0)
+
+
+plot_pt(adata, pt_cellrank_latent, basis = "umap", trajs = 1, figsize=(20,10), save_as= direct1 + "plots/hema_cellranks.png")
+
+pt_vetra = pd.DataFrame(data = np.nan, index = pt_cellrank_latent.index, columns = ["traj_" + str(i) for i in range(5)])
+counts = 5
+
+for i in range(1,counts):
+    select_cell = pd.read_csv(direct1 + "vetra/real/hema/TI_results_4/cell_select_" + str(i) + ".txt", header = None).values.astype(np.bool).squeeze()
+    pt_i = pd.read_csv(direct1 + "vetra/real/hema/TI_results_4/trajectory_" + str(i) + ".txt", header = None).iloc[select_cell].values
+    pt_vetra.loc[select_cell.squeeze(), "traj_" + str(i - 1)] = pt_i.squeeze()
+
+plot_pt(adata, pt_vetra, basis = "umap", trajs = counts - 1, figsize=(20,10), save_as= direct1 + "plots/hema_vetra_4.pdf")
+
+# In[] Plot real-forebrain
+direct1 = "../results/"
+
+adata = anndata.read_h5ad("../data/real/forebrain/fb_clust.h5ad")
+
+pt_cellrank_latent = pd.read_csv(direct1 + "cellrank/real/forebrain/forebrain_latent_cellrank.tsv", sep = "\t", index_col = 0)
+
+
+plot_pt(adata, pt_cellrank_latent, basis = "pca", trajs = 1, figsize=(20,10), save_as= direct1 + "plots/forebrain_cellranks.png")
+
+pt_vetra = pd.DataFrame(data = np.nan, index = pt_cellrank_latent.index, columns = ["traj_" + str(i) for i in range(5)])
+counts = 2
+
+for i in range(1,counts):
+    select_cell = pd.read_csv(direct1 + "vetra/real/forebrain/TI_results/cell_select_" + str(i) + ".txt", header = None).values.astype(np.bool).squeeze()
+    pt_i = pd.read_csv(direct1 + "vetra/real/forebrain/TI_results/trajectory_" + str(i) + ".txt", header = None).iloc[select_cell].values
+    pt_vetra.loc[select_cell.squeeze(), "traj_" + str(i - 1)] = pt_i.squeeze()
+
+plot_pt(adata, pt_vetra, basis = "pca", trajs = counts - 1, figsize=(20,10), save_as= direct1 + "plots/forebrain_vetra.png")
+
+
+# In[] Plot real-dentate gyrus
+
+direct1 = "../results/"
+
+adata = anndata.read_h5ad("../data/real/DentateGyrus/dg_clust.h5ad")
+
+pt_cellrank_latent = pd.read_csv(direct1 + "cellrank/real/DentateGyrus/dg_latent_cellrank.tsv", sep = "\t", index_col = 0)
+
+pt_vetra = pd.DataFrame(data = np.nan, index = pt_cellrank_latent.index, columns = ["traj_" + str(i) for i in range(5)])
+counts = 6
+
+for i in range(1,counts):
+    select_cell = pd.read_csv(direct1 + "vetra/real/DentateGyrus/TI_results_5/cell_select_" + str(i) + ".txt", header = None).values.astype(np.bool).squeeze()
+    pt_i = pd.read_csv(direct1 + "vetra/real/DentateGyrus/TI_results_5/trajectory_" + str(i) + ".txt", header = None).iloc[select_cell].values
+    pt_vetra.loc[select_cell.squeeze(), "traj_" + str(i - 1)] = pt_i.squeeze()
+
+plot_pt(adata, pt_vetra, basis = "umap", trajs = counts - 1, figsize=(20,15), save_as= direct1 + "plots/dg_vetra_5.png")
+
+# In[] Plot real-pe
+direct1 = "../results/"
+
+adata = anndata.read_h5ad("../data/real/Pancreas/pe_clust.h5ad")
+
+pt_cellrank_latent = pd.read_csv(direct1 + "cellrank/real/Pancreas/pe_latent_cellrank.tsv", sep = "\t", index_col = 0)
+
+
+# plot_pt(adata, pt_cellrank_latent, basis = "umap", trajs = 1, figsize=(20,10), save_as= direct1 + "plots/pe_cellranks.png")
+
+pt_vetra = pd.DataFrame(data = np.nan, index = pt_cellrank_latent.index, columns = ["traj_" + str(i) for i in range(5)])
+counts = 7
+
+for i in range(1,counts):
+    select_cell = pd.read_csv(direct1 + "vetra/real/Pancreas/TI_results_6/cell_select_" + str(i) + ".txt", header = None).values.astype(np.bool).squeeze()
+    pt_i = pd.read_csv(direct1 + "vetra/real/Pancreas/TI_results_6/trajectory_" + str(i) + ".txt", header = None).iloc[select_cell].values
+    pt_vetra.loc[select_cell.squeeze(), "traj_" + str(i - 1)] = pt_i.squeeze()
+
+plot_pt(adata, pt_vetra, basis = "umap", trajs = counts - 1, figsize=(20,15), save_as= direct1 + "plots/pe_vetra_6.png")
+
+# In[] Plot real-hema
+direct1 = "../results/"
+
+adata = anndata.read_h5ad("../data/real/hema/adata_day4_clust.h5ad")
+
+pt_cellrank_latent = pd.read_csv(direct1 + "cellrank/real/hema/hema_latent_cellrank.tsv", sep = "\t", index_col = 0)
+
+
+# plot_pt(adata, pt_cellrank_latent, basis = "umap", trajs = 1, figsize=(20,10), save_as= direct1 + "plots/hema_cellranks.png")
+
+pt_vetra = pd.DataFrame(data = np.nan, index = pt_cellrank_latent.index, columns = ["traj_" + str(i) for i in range(5)])
+counts = 5
+
+for i in range(1,counts):
+    select_cell = pd.read_csv(direct1 + "vetra/real/hema/TI_results_4/cell_select_" + str(i) + ".txt", header = None).values.astype(np.bool).squeeze()
+    pt_i = pd.read_csv(direct1 + "vetra/real/hema/TI_results_4/trajectory_" + str(i) + ".txt", header = None).iloc[select_cell].values
+    pt_vetra.loc[select_cell.squeeze(), "traj_" + str(i - 1)] = pt_i.squeeze()
+
+plot_pt(adata, pt_vetra, basis = "umap", trajs = counts - 1, figsize=(20,10), save_as= direct1 + "plots/hema_vetra_4.png")
 
 
 # %%

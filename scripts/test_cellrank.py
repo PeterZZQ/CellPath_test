@@ -425,6 +425,266 @@ for data in datasets:
     pt_final.to_csv(path2 + data + "_latent_cellrank.tsv", sep = "\t", na_rep='NA')
 
 
+# In[]
+# real datasets
+# hema
+use_dynamic = True
+
+adata = anndata.read_h5ad("../data/real/hema/adata_day4_clust.h5ad")
+
+scv.tl.recover_dynamics(adata, n_jobs = 6)
+scv.tl.velocity(adata, mode="dynamical")
+
+# scv.tl.umap(adata)
+scv.tl.velocity_graph(adata)
+scv.tl.velocity_embedding(adata, basis = "pca")
+scv.tl.velocity_embedding(adata, basis = "umap")
+
+cr.tl.terminal_states(adata, cluster_key=None, weight_connectivities=0.2)
+cr.pl.terminal_states(adata, basis = "umap")
+
+cr.tl.initial_states(adata, cluster_key=None)
+cr.pl.initial_states(adata, basis = "umap", discrete=True)
+
+initial_idx = [idx for idx, x in enumerate(adata.obs["initial_states"].values) if x is not np.nan]
+initial_val = [x for idx, x in enumerate(adata.obs["initial_states"].values) if x is not np.nan]
+
+cr.tl.lineages(adata)
+cr.pl.lineages(adata, same_plot=False)
+lineage = adata.obsm['to_terminal_states']
+lineage_name = [x for x in lineage.names]
+lineage = np.array(lineage)
+max_lineage = np.argmax(lineage, axis = 1)
+max_lineage = np.array([x for x in max_lineage])
+
+if use_dynamic:
+    scv.tl.recover_latent_time(adata, root_key="initial_states_probs", end_key="terminal_states_probs")
+    scv.pl.scatter(adata,
+        basis = "umap",
+        color=["latent_time"],
+        fontsize=16,
+        cmap="viridis",
+        perc=[2, 98],
+        colorbar=True,
+        rescale_color=[0, 1],
+        title=["latent time"],
+    )
+    pt = adata.obs["latent_time"]
+else:
+    
+    root_idx = initial_idx[0]
+    adata.uns["iroot"] = root_idx
+    sc.tl.dpt(adata)
+    scv.pl.scatter(adata,
+        color=["dpt_pseudotime"],
+        fontsize=16,
+        cmap="viridis",
+        perc=[2, 98],
+        colorbar=True,
+        rescale_color=[0, 1],
+        title=["dpt pseudotime"],
+    )
+
+    pt = adata.obs["dpt_pseudotime"].values
+
+
+pt_final = pd.DataFrame(data = pt.values, index = adata.obs.index, columns = ["traj_0"])
+pt_final.to_csv("../results/cellrank/real/hema/hema_latent_cellrank.tsv", sep = "\t", na_rep='NA')
+
+
+
+
+# In[]
+# dg
+
+use_dynamic = True
+
+# adata = anndata.read_h5ad("../data/real/DentateGyrus/10X43_1.h5ad")
+# scv.tl.recover_dynamics(adata, n_jobs = 6)
+# scv.tl.velocity(adata, mode="dynamical")
+
+adata = anndata.read_h5ad("../data/real/DentateGyrus/dg_clust.h5ad")
+scv.tl.velocity_graph(adata)
+scv.tl.velocity_embedding(adata, basis = "pca")
+scv.tl.velocity_embedding(adata, basis = "umap")
+
+cr.tl.terminal_states(adata, cluster_key=None, weight_connectivities=0.2)
+cr.pl.terminal_states(adata, basis = "umap")
+
+cr.tl.initial_states(adata, cluster_key=None)
+cr.pl.initial_states(adata, basis = "umap", discrete=True)
+
+initial_idx = [idx for idx, x in enumerate(adata.obs["initial_states"].values) if x is not np.nan]
+initial_val = [x for idx, x in enumerate(adata.obs["initial_states"].values) if x is not np.nan]
+
+cr.tl.lineages(adata)
+cr.pl.lineages(adata, same_plot=False)
+lineage = adata.obsm['to_terminal_states']
+lineage_name = [x for x in lineage.names]
+lineage = np.array(lineage)
+max_lineage = np.argmax(lineage, axis = 1)
+max_lineage = np.array([x for x in max_lineage])
+
+if use_dynamic:
+    scv.tl.recover_latent_time(adata, root_key="initial_states_probs", end_key="terminal_states_probs")
+    scv.pl.scatter(adata,
+        basis = "umap",
+        color=["latent_time"],
+        fontsize=16,
+        cmap="viridis",
+        perc=[2, 98],
+        colorbar=True,
+        rescale_color=[0, 1],
+        title=["latent time"],
+    )
+    pt = adata.obs["latent_time"]
+else:
+    
+    root_idx = initial_idx[0]
+    adata.uns["iroot"] = root_idx
+    sc.tl.dpt(adata)
+    scv.pl.scatter(adata,
+        color=["dpt_pseudotime"],
+        fontsize=16,
+        cmap="viridis",
+        perc=[2, 98],
+        colorbar=True,
+        rescale_color=[0, 1],
+        title=["dpt pseudotime"],
+    )
+
+    pt = adata.obs["dpt_pseudotime"].values
+
+
+pt_final = pd.DataFrame(data = pt.values, index = adata.obs.index, columns = ["traj_0"])
+pt_final.to_csv("../results/cellrank/real/dg/dg_latent_cellrank.tsv", sep = "\t", na_rep='NA')
+
+# In[] pancreas
+
+use_dynamic = True
+
+adata = anndata.read_h5ad("../data/real/Pancreas/pe_clust.h5ad")
+scv.tl.velocity_graph(adata)
+scv.tl.velocity_embedding(adata, basis = "pca")
+scv.tl.velocity_embedding(adata, basis = "umap")
+
+cr.tl.terminal_states(adata, cluster_key=None, weight_connectivities=0.2)
+cr.pl.terminal_states(adata, basis = "umap")
+
+cr.tl.initial_states(adata, cluster_key=None)
+cr.pl.initial_states(adata, basis = "umap", discrete=True)
+
+initial_idx = [idx for idx, x in enumerate(adata.obs["initial_states"].values) if x is not np.nan]
+initial_val = [x for idx, x in enumerate(adata.obs["initial_states"].values) if x is not np.nan]
+
+cr.tl.lineages(adata)
+cr.pl.lineages(adata, same_plot=False)
+lineage = adata.obsm['to_terminal_states']
+lineage_name = [x for x in lineage.names]
+lineage = np.array(lineage)
+max_lineage = np.argmax(lineage, axis = 1)
+max_lineage = np.array([x for x in max_lineage])
+
+if use_dynamic:
+    scv.tl.recover_latent_time(adata, root_key="initial_states_probs", end_key="terminal_states_probs")
+    scv.pl.scatter(adata,
+        basis = "umap",
+        color=["latent_time"],
+        fontsize=16,
+        cmap="viridis",
+        perc=[2, 98],
+        colorbar=True,
+        rescale_color=[0, 1],
+        title=["latent time"],
+    )
+    pt = adata.obs["latent_time"]
+else:
+    
+    root_idx = initial_idx[0]
+    adata.uns["iroot"] = root_idx
+    sc.tl.dpt(adata)
+    scv.pl.scatter(adata,
+        color=["dpt_pseudotime"],
+        fontsize=16,
+        cmap="viridis",
+        perc=[2, 98],
+        colorbar=True,
+        rescale_color=[0, 1],
+        title=["dpt pseudotime"],
+    )
+
+    pt = adata.obs["dpt_pseudotime"].values
+
+
+pt_final = pd.DataFrame(data = pt.values, index = adata.obs.index, columns = ["traj_0"])
+pt_final.to_csv("../results/cellrank/real/pe/pe_latent_cellrank.tsv", sep = "\t", na_rep='NA')
+
+
+# In[] forebrain
+
+use_dynamic = True
+
+adata = anndata.read_h5ad("../data/real/forebrain/fb_clust.h5ad")
+scv.tl.recover_dynamics(adata, n_jobs = 6)
+scv.tl.velocity(adata, mode="dynamical")
+gene_idx = ~np.isnan(np.sum(adata.layers["velocity"], axis = 0))
+adata = adata[:,gene_idx]
+
+scv.tl.umap(adata)
+scv.tl.velocity_graph(adata)
+scv.tl.velocity_embedding(adata, basis = "pca")
+scv.tl.velocity_embedding(adata, basis = "umap")
+
+cr.tl.terminal_states(adata, cluster_key=None, weight_connectivities=0.2)
+cr.pl.terminal_states(adata, basis = "pca")
+
+cr.tl.initial_states(adata, cluster_key=None)
+cr.pl.initial_states(adata, basis = "pca", discrete=True)
+
+initial_idx = [idx for idx, x in enumerate(adata.obs["initial_states"].values) if x is not np.nan]
+initial_val = [x for idx, x in enumerate(adata.obs["initial_states"].values) if x is not np.nan]
+
+cr.tl.lineages(adata)
+cr.pl.lineages(adata, same_plot=False)
+lineage = adata.obsm['to_terminal_states']
+lineage_name = [x for x in lineage.names]
+lineage = np.array(lineage)
+max_lineage = np.argmax(lineage, axis = 1)
+max_lineage = np.array([x for x in max_lineage])
+
+if use_dynamic:
+    scv.tl.recover_latent_time(adata, root_key="initial_states_probs", end_key="terminal_states_probs")
+    scv.pl.scatter(adata,
+        basis = "pca",
+        color=["latent_time"],
+        fontsize=16,
+        cmap="viridis",
+        perc=[2, 98],
+        colorbar=True,
+        rescale_color=[0, 1],
+        title=["latent time"],
+    )
+    pt = adata.obs["latent_time"]
+else:
+    
+    root_idx = initial_idx[0]
+    adata.uns["iroot"] = root_idx
+    sc.tl.dpt(adata)
+    scv.pl.scatter(adata,
+        color=["dpt_pseudotime"],
+        fontsize=16,
+        cmap="viridis",
+        perc=[2, 98],
+        colorbar=True,
+        rescale_color=[0, 1],
+        title=["dpt pseudotime"],
+    )
+
+    pt = adata.obs["dpt_pseudotime"].values
+
+
+pt_final = pd.DataFrame(data = pt.values, index = adata.obs.index, columns = ["traj_0"])
+pt_final.to_csv("../results/cellrank/real/forebrain/forebrain_latent_cellrank.tsv", sep = "\t", na_rep='NA')
 
 
 # %%
