@@ -98,10 +98,6 @@ def de_analy(cellpath_obj, p_val_t = 0.05, verbose = False, distri = "neg-binomi
 
     de_genes = {}
     for reconst_i in pseudo_order.columns:
-        if reconst_i in ["traj_0", "traj_8"]:
-            pass
-        else:
-            continue
         de_genes[reconst_i] = []
         sorted_pt = pseudo_order[reconst_i].dropna(axis = 0).sort_values()
         # ordering = [int(x.split("_")[1]) for x in sorted_pt.index]
